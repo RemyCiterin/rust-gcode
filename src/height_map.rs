@@ -53,8 +53,8 @@ impl HeightMap {
 
     // inplace naive algorithm for 2D convolution in the semi-ring (R, max, +)
     pub fn set_max_plus_convolve(&mut self, f:&Self, g:&Self) -> &mut Self {
-        assert!(self.height + g.height == f.height);
-        assert!(self.width + g.width == f.width);
+        assert!(self.height + g.height >= f.height);
+        assert!(self.width + g.width >= f.width);
 
         for i in 0..self.width {
             for j in 0..self.height {
@@ -67,6 +67,10 @@ impl HeightMap {
                             if val > max {maxopt = Some(val);}
                         } else {maxopt = Some(val);}
                     }
+                }
+
+                if let Some(max) = maxopt {
+                    self.set(i, j, max);
                 }
             }
         }
