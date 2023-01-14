@@ -62,7 +62,7 @@ impl HeightMap {
 
                 for x in 0..g.width {
                     for y in 0..g.height {
-                        let val = g.unsafe_get(x, y) + f.unsafe_get(i+g.width-1-x, j+g.height-1-y);
+                        let val = g.unsafe_get(g.width-1-x, g.height-1-y) + f.unsafe_get(i+x, j+y);
                         if let Some(max) = maxopt {
                             if val > max {maxopt = Some(val);}
                         } else {maxopt = Some(val);}
