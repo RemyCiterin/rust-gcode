@@ -2,7 +2,7 @@ use image::{Rgba, Rgb};
 
 
 pub struct HeightMap {
-    buffer : Vec<f64>, // les couleurs sont normalisé : max_color = 1.0
+    buffer : Vec<f64>,
     width : usize,
     height: usize
 }
