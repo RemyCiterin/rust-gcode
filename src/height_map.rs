@@ -1,5 +1,5 @@
 use image::{Rgba, Rgb};
-
+use rayon::prelude::*;
 
 pub struct HeightMap {
     buffer : Vec<f64>,
@@ -64,24 +64,27 @@ impl HeightMap {
 
         for i in 0..self.width {
             for j in 0..self.height {
-                let mut maxopt : Option<f64> = None;
-
-                for x in 0..g.width {
-                    for y in 0..g.height {
-                        let val = g.unsafe_get(g.width-1-x, g.height-1-y) + f.unsafe_get(i+x, j+y);
-                        if let Some(max) = maxopt {
-                            if val > max {maxopt = Some(val);}
-                        } else {maxopt = Some(val);}
-                    }
-                }
-
-                if let Some(max) = maxopt {
+                if let Some(max) = f.get_max_plus_convolve_at(g, i, j) {
                     self.unsafe_set(i, j, max);
                 }
             }
         }
 
         self
+    }
+
+    fn get_max_plus_convolve_at(&self, other:&Self, i:usize, j:usize) -> Option<f64> {
+        let mut maxopt = None;
+
+        for x in 0..other.width {
+            for y in 0..other.height {
+                let val = other.unsafe_get(other.width-1-x, other.height-1-y) + self.unsafe_get(i+x, j+y);
+                if let Some(max) = maxopt {if val > max {maxopt = Some(val);}}
+                else {maxopt = Some(val);}
+            }
+        }
+
+        maxopt
     }
 
     // immutable 2D convolution in the semi-ring (R, max, +)
@@ -93,6 +96,29 @@ impl HeightMap {
         buffer.set_max_plus_convolve(self, other);
 
         buffer
+    }
+
+    pub fn par_get_max_plus_convolve(&self, other:&Self) -> Self {
+        assert!(self.height + 1 >= other.height);
+        assert!(self.width + 1 >= other.width);
+
+        let mut buffer = Self::new(self.width - other.width + 1, self.height - other.height + 1);
+        buffer.par_set_max_plus_convolve(self, other);
+
+        buffer
+    }
+
+    pub fn par_set_max_plus_convolve(&mut self, f:&Self, g:&Self) -> &mut Self {
+        assert!(self.height >= f.height + 1 - g.height);
+        assert!(self.width >= f.width + 1 - g.width);
+
+        self.buffer.par_iter_mut().enumerate().for_each(|(addr, p)| {
+            if let Some(max) = f.get_max_plus_convolve_at(g, addr / self.height, addr % self.height) {
+                *p = max;
+            }
+        });
+
+        self
     }
 
 }
