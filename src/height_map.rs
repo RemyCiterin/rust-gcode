@@ -72,11 +72,28 @@ impl HeightMap {
 
         for i in 0..self.width {
             for j in 0..self.height {
+                self.set(i, j, -1e9);
+            }
+        }
+
+        for i in 0..self.width {
+            for x in 0..g.width {
+                for y in 0..g.height {
+                    for j in 0..self.height {
+                        let val = g.unsafe_get(g.width-1-x, g.height-1-y) + f.unsafe_get(i+x, j+y);
+                        if val > self.unsafe_get(i, j) {self.unsafe_set(i, j, val);}
+                    }
+                }
+            }
+        }
+
+        /*for i in 0..self.width {
+            for j in 0..self.height {
                 if let Some(max) = f.get_max_plus_convolve_at(g, i, j) {
                     self.unsafe_set(i, j, max);
                 }
             }
-        }
+        }*/
 
         self
     }
@@ -157,14 +174,15 @@ mod tests {
 
     #[test]
     fn test_size() {
-        let hmap1 = HeightMap::new(155, 155);
-        let hmap2 = HeightMap::new(3, 3);
+        let hmap1 = HeightMap::new(1024, 1024);
+        let hmap2 = HeightMap::new(5, 5);
 
         let out = hmap1.get_max_plus_convolve(&hmap2);
 
         assert_eq!(out.get_height(), hmap1.get_height() + 1 - hmap2.get_height());
         assert_eq!(out.get_width(), hmap1.get_width() + 1 - hmap2.get_width());
     }
+
 
     #[test]
     fn test_output_value() {
