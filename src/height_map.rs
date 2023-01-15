@@ -8,6 +8,30 @@ pub struct HeightMap {
     height: usize
 }
 
+pub enum ToolShape {
+    Flat(f64), // `Flat(f)` is a disk of rayon `f`
+    Ball(f64), // `Ball(r)` is a ball of rayon `r`
+    V(f64, f64)// `V(r, a)` is a `V` of rayon `r` and angle `a` in radian
+}
+
+impl ToolShape {
+    pub fn get_rayon(&self) -> f64 {
+        match self {
+            ToolShape::Flat(r) => r,
+            ToolShape::Ball(r) => r,
+            ToolShape::V(r, _) => r
+        }.clone()
+    }
+
+    pub fn get_size(&self) -> f64 {
+        match self {
+            ToolShape::Flat(_) => 1.0,
+            ToolShape::Ball(r) => r.clone(),
+            ToolShape::V(r, t) => r.clone() * f64::tan(t.clone())
+        }
+    }
+}
+
 impl HeightMap {
     pub fn new(width : usize, height: usize) -> Self {
         let mut buffer = Vec::with_capacity(width * height);
@@ -21,6 +45,53 @@ impl HeightMap {
             width,
             height
         }
+    }
+
+    // return an new height map such that the tool under-approximate the input fmap
+    pub fn generate_tool_hmap(mut self, width:f64, height: f64, depth:f64, tool:ToolShape) -> Self {
+        for i in 0..self.width {for j in 0..self.height {
+            let x = self.get(i, j);
+            self.set(i, j, x * depth);
+        }}
+
+        let out_width  = (self.width  as f64) * tool.get_rayon() / width ;
+        let out_height = (self.height as f64) * tool.get_rayon() / height;
+
+        let mut hmap = Self::new(
+            2 * out_width as usize + 1,
+            2 * out_height as usize + 1
+        );
+
+
+        for i in 0..hmap.width {
+            for j in 0..hmap.height {
+                let distance_to_center = f64::sqrt(
+                    f64::powi((out_width  - i as f64) * width  / (self.width  as f64), 2) +
+                    f64::powi((out_height - j as f64) * height / (self.height as f64), 2),
+                );
+
+                if distance_to_center > tool.get_rayon() {
+                    hmap.set(i, j, -1e9);
+                } else {
+                    hmap.set(i, j, match tool {
+                        ToolShape::Flat(_) => 0.0,
+                        ToolShape::Ball(r) => {
+                            let angle = f64::acos(distance_to_center / r);
+                            assert!(f64::sin(angle) >= 0.0);
+                            r * f64::sin(angle) - r
+                        },
+                        ToolShape::V(_, theta) => {
+                            assert!(f64::tan(theta / 2.0) >= 0.0);
+                            -distance_to_center / f64::tan(theta / 2.0)
+                        }
+                    });
+                }
+            }
+        }
+
+        hmap.save(-2.0 * tool.get_size(), 0.0, "./tool_shape.png").unwrap();
+
+        self.par_get_max_plus_convolve(&hmap)
     }
 
     pub fn new_with_buffer(width:usize, height: usize, buffer:Vec<f64>) -> Self {
@@ -98,6 +169,7 @@ impl HeightMap {
         self
     }
 
+
     fn get_max_plus_convolve_at(&self, other:&Self, i:usize, j:usize) -> Option<f64> {
         let mut maxopt = None;
 
@@ -174,7 +246,7 @@ mod tests {
 
     #[test]
     fn test_size() {
-        let hmap1 = HeightMap::new(1024, 1024);
+        let hmap1 = HeightMap::new(1920, 1080);
         let hmap2 = HeightMap::new(5, 5);
 
         let out = hmap1.get_max_plus_convolve(&hmap2);
