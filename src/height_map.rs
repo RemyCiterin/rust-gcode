@@ -52,11 +52,13 @@ impl HeightMap {
     pub fn set_from_rgba8(&mut self, x:usize, y:usize, pixel:Rgba<u8>, background:Rgb<u8>) -> &mut Self {
         let luma_a = pixel.to_luma_alpha();
 
-        let alpha = luma_a.channels()[1] as usize as f64;
-        let color = luma_a.channels()[0] as usize as f64;
-        let background = background.to_luma().channels()[0] as usize as f64;
+        let alpha = luma_a.channels()[1] as usize as f64 / 255.0;
+        let color = luma_a.channels()[0] as usize as f64 / 255.0;
+        let background = background.to_luma().channels()[0] as usize as f64 / 255.0;
 
-        self.set(x, y, - (color * alpha + background * (1.0 - alpha)) / 255.0)
+        let color = color * alpha + background * (1.0 - alpha);
+
+        self.set(x, y, color-1.0)
     }
 
     pub fn get_height(&self) -> usize {self.height}
@@ -132,7 +134,7 @@ impl HeightMap {
 
         for i in 0..self.width {
             for j in 0..self.height {
-                let mut color = (min + self.get(i, j)) / (max - min);
+                let mut color = (self.get(i, j) - min) / (max - min);
                 if color > 1.0 {color = 1.0;}
                 if color < 0.0 {color = 0.0;}
 

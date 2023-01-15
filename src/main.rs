@@ -11,7 +11,7 @@ pub fn main() {
 
     println!("Hello, world!");
 
-    let mut hmap2 = HeightMap::new(20, 20);
+    /*let mut hmap2 = HeightMap::new(20, 20);
     for i in 0..hmap2.get_width() {for j in 0..hmap2.get_height() {
         hmap2.set(i, j, 1.4 * (i as f64) + 0.73 * (j as f64));
     }}
@@ -26,8 +26,8 @@ pub fn main() {
         for j in 0..out.get_height() {
             result += out.get(i, j);
         }
-    }
+    }*/
 
     hmap1.save(-1.0, 0.0, "test_out.png").expect("unable to save the image");
-    println!("{}", result);
+    //println!("{}", result);
 }
