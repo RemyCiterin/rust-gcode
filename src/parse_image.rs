@@ -1,8 +1,8 @@
-use image::{io::Reader as ImageReader, GenericImageView, Rgba};
-
+use image::{io::Reader as ImageReader, GenericImageView, Rgb};
+use crate::height_map::*;
 
 // take a path to an image and return it as Rgb array
-pub fn parse_image(path : &str) -> Result<Vec<Rgba<u8>>, String> {
+pub fn parse_image(path : &str, background:Rgb<u8>) -> Result<HeightMap, String> {
     let img = ImageReader::open("./test_png_image.png");//.unwrap().decode().unwrap();
 
     match img {
@@ -14,15 +14,20 @@ pub fn parse_image(path : &str) -> Result<Vec<Rgba<u8>>, String> {
 
                     println!("{} {}", width, height);
 
-                    let mut img_to_vector : Vec<Rgba<u8>> = vec![];
+                    let mut hmap = HeightMap::new(width as usize, height as usize);
 
                     for i in 0..width {
                         for j in 0..height {
-                            img_to_vector.push(img.get_pixel(i, j).clone());
+                            hmap.set_from_rgba8(
+                                i as usize,
+                                j as usize,
+                                img.get_pixel(i, j).clone(),
+                                background
+                            );
                         }
                     }
 
-                    Ok(img_to_vector)
+                    Ok(hmap)
                 },
                 Err(_) => Err("unable to decode the image".to_string())
             }

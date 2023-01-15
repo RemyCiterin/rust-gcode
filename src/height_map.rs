@@ -1,4 +1,5 @@
-use image::{Rgba, Rgb};
+use image::{Rgba, Rgb, Pixel, DynamicImage, RgbImage, Luma, ImageFormat::Png};
+
 use rayon::prelude::*;
 
 pub struct HeightMap {
@@ -14,7 +15,6 @@ impl HeightMap {
         for _ in 0..width*height {
             buffer.push(0.0);
         }
-
 
         HeightMap {
             buffer,
@@ -50,7 +50,13 @@ impl HeightMap {
     }
 
     pub fn set_from_rgba8(&mut self, x:usize, y:usize, pixel:Rgba<u8>, background:Rgb<u8>) -> &mut Self {
-        self.set(x, y, panic!("need to compute it"))
+        let luma_a = pixel.to_luma_alpha();
+
+        let alpha = luma_a.channels()[1] as usize as f64;
+        let color = luma_a.channels()[0] as usize as f64;
+        let background = background.to_luma().channels()[0] as usize as f64;
+
+        self.set(x, y, - (color * alpha + background * (1.0 - alpha)) / 255.0)
     }
 
     pub fn get_height(&self) -> usize {self.height}
@@ -121,6 +127,26 @@ impl HeightMap {
         self
     }
 
+    pub fn save(&self, min:f64, max:f64, path:&str) -> Result<(), String> {
+        let mut rgb: RgbImage = RgbImage::new(self.width as u32, self.height as u32);
+
+        for i in 0..self.width {
+            for j in 0..self.height {
+                let mut color = (min + self.get(i, j)) / (max - min);
+                if color > 1.0 {color = 1.0;}
+                if color < 0.0 {color = 0.0;}
+
+                let pixel = Luma::<u8>::from_slice(&[(255.0 * color) as usize as u8]).to_rgb();
+                rgb.put_pixel(i as u32, j as u32, pixel);
+            }
+        }
+
+        if let Err(_) = DynamicImage::ImageRgb8(rgb).save_with_format(path, Png){
+            Err("unable to save the image".to_string())
+        } else {Ok(())}
+
+    }
+
 }
 
 #[cfg(test)]
@@ -155,7 +181,8 @@ mod tests {
             1.0, 0.0
         ]);
 
-        let out = hmap1.get_max_plus_convolve(&hmap2);
+        let out1 = hmap1.get_max_plus_convolve(&hmap2);
+        let out2 = hmap1.par_get_max_plus_convolve(&hmap2);
 
         let v_out = HeightMap::new_with_buffer(4, 2, vec![
             5.0, 6.0,
@@ -164,9 +191,17 @@ mod tests {
             6.0, 7.0
         ]);
 
-        for i in 0..out.get_width() {
-            for j in 0..out.get_height() {
-                let x1 = out.get(i, j);
+        for i in 0..out1.get_width() {
+            for j in 0..out1.get_height() {
+                let x1 = out1.get(i, j);
+                let x2 = v_out.get(i, j);
+                assert!(x1 < x2 + 1e-9 && x2 < x1 + 1e-9);
+            }
+        }
+
+        for i in 0..out2.get_width() {
+            for j in 0..out2.get_height() {
+                let x1 = out2.get(i, j);
                 let x2 = v_out.get(i, j);
                 assert!(x1 < x2 + 1e-9 && x2 < x1 + 1e-9);
             }
