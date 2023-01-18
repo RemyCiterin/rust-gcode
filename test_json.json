@@ -1,0 +1,15 @@
+
+{
+    "tool shape" : {
+        "shape" : "flat",
+        "rayon" : 1.2e-2
+    },
+    "flight height" : 1e-3,
+    "vertical speed" : 1e-3,
+    "horizontal work speed" : 1e-3,
+    "horizontal fly speed" : 1e-2,
+    "depth" : 1.5e-3,
+    "width" : 1e-2,
+    "height": 2e-2,
+    "normalizing" : "false"
+}

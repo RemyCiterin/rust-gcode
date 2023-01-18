@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 peg = "*"
-serde_json = "*"
+json = "*"
 image = "*"
 rayon = "*"
