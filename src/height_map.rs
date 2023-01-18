@@ -1,35 +1,11 @@
 use image::{Rgba, Rgb, Pixel, DynamicImage, RgbImage, Luma, ImageFormat::Png};
-
+use crate::parse_config::ToolShape;
 use rayon::prelude::*;
 
 pub struct HeightMap {
     buffer : Vec<f64>,
     width : usize,
     height: usize
-}
-
-pub enum ToolShape {
-    Flat(f64), // `Flat(f)` is a disk of rayon `f`
-    Ball(f64), // `Ball(r)` is a ball of rayon `r`
-    V(f64, f64)// `V(r, a)` is a `V` of rayon `r` and angle `a` in radian
-}
-
-impl ToolShape {
-    pub fn get_rayon(&self) -> f64 {
-        match self {
-            ToolShape::Flat(r) => r,
-            ToolShape::Ball(r) => r,
-            ToolShape::V(r, _) => r
-        }.clone()
-    }
-
-    pub fn get_size(&self) -> f64 {
-        match self {
-            ToolShape::Flat(_) => 1.0,
-            ToolShape::Ball(r) => r.clone(),
-            ToolShape::V(r, t) => r.clone() * f64::tan(t.clone())
-        }
-    }
 }
 
 impl HeightMap {
@@ -216,6 +192,11 @@ impl HeightMap {
         });
 
         self
+    }
+
+    pub fn get_default(&self, x:usize, y:usize) -> f64 {
+        if x < self.width && y < self.height {self.unsafe_get(x, y)}
+        else {0.0}
     }
 
     pub fn save(&self, min:f64, max:f64, path:&str) -> Result<(), String> {
