@@ -254,7 +254,6 @@ impl BitMap {
 }
 
 impl HeightMap {
-
     /// take a height map as input and return the set of segments
     /// (the boundary between pixels smaller and larger than z)
     /// include in this height map between the pixel
