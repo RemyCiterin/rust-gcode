@@ -78,12 +78,12 @@ the input JSON must have the following format:
         "rayon" : 1.2e-2
     },
     "flight height" : 1e-3,
-    "vectival speed" : 1e-3,
+    "vertical speed" : 1e-3,
     "horizontal work speed" : 1e-3,
     "horizontal fly speed" : 1e-2,
     "depth" : 1.5e-3,
-    "width" : 1e-2
-    "height": 2e-2
+    "width" : 1e-2,
+    "height": 2e-2,
     "normalizing" : "false"
 }
 
@@ -190,6 +190,12 @@ impl Config {
             }
         };
 
+        let normalizing = if object["normalizing"] == "true" || object["normalizing"] == "false" {
+            object["normalizing"] == true
+        } else {
+            return Err(format!("don't find a valid normalization parameter in the file `{}`", path));
+        };
+
 
         Ok(Config{
             tool_shape,
@@ -197,7 +203,7 @@ impl Config {
             horizontal_fly_speed:find_f64("horizontal fly speed")?,
             horizontal_work_speed:find_f64("horizontal work speed")?,
             fly_z:find_f64("flight height")?,
-            normalizing:object["normalizing"] == true,
+            normalizing,
             depth:find_f64("depth")?,
             width:find_f64("width")?,
             height:find_f64("height")?

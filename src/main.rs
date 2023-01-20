@@ -1,7 +1,6 @@
 use image::{Rgb, Pixel};
 use rust_gcode::parse_config::*;
 use rust_gcode::parse_image::parse_image;
-use rust_gcode::height_map::*;
 use rust_gcode::bit_map::*;
 
 pub fn main() {

@@ -8,7 +8,6 @@ pub struct HeightMap {
     height: usize
 }
 
-
 impl HeightMap {
     pub fn new(width : usize, height: usize) -> Self {
         let mut buffer = Vec::with_capacity(width * height);
@@ -193,6 +192,11 @@ impl HeightMap {
         });
 
         self
+    }
+
+    pub fn get_default(&self, x:usize, y:usize) -> f64 {
+        if x < self.width && y < self.height {self.unsafe_get(x, y)}
+        else {0.0}
     }
 
     pub fn save(&self, min:f64, max:f64, path:&str) -> Result<(), String> {
